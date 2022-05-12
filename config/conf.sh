@@ -6,6 +6,7 @@ output_dir="exp"
 # This can likely be the same for other experiments
 model_type="roberta"
 max_seq_length="512"
+line_by_line=""
 do_train="--do_train"
 batch_train="32"
 overwrite_cache="--overwrite_cache"
