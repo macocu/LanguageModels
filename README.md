@@ -17,7 +17,7 @@ cd LanguageModels
 The run_mlm.py script requires an installation from the source:
 
 ```
-git clone https://github.com/huggingface/transformers
+git clone https://github.com/RikVN/transformers
 cd transformers
 pip install .
 cd ../
@@ -86,10 +86,10 @@ SSH to the newly created VM:
 gcloud compute ssh $EXP_NAME
 ```
 
-Use screen so we can start processes that keep running in the background:
+Use tmux so we can start processes that keep running in the background:
 
 ```
-screen -S macocu
+tmux new -s macocu
 ```
 
 New SSH instance so do the exports again:
@@ -105,6 +105,8 @@ Launch TPU, hope they are available. Make sure you specified the correct acceler
 ```
 gcloud compute tpus create $EXP_NAME --zone=${ZONE} --network=default --version=pytorch-1.11  --accelerator-type=v3-8
 ```
+
+If you get the error that there are no resources available, just keep trying until it works. That's the only solution I have currently.
 
 For saving/storing data, the best option seems a [cloud storage bucket](https://cloud.google.com/compute/docs/disks#gcsbuckets), with [explanation here](https://cloud.google.com/storage/docs/quickstart-gsutil#create). Create a bucket like this:
 
@@ -133,10 +135,10 @@ export TPU_IP_ADDRESS="IP_ADDRESS_HERE"
 export XRT_TPU_CONFIG="tpu_worker;0;$TPU_IP_ADDRESS:8470"
 ```
 
-Then install Transformers and the requirements as described above.
+Then install my fork of the Transformers repo and the requirements as described above.
 
 ```
-git clone https://github.com/huggingface/transformers
+git clone https://github.com/RikVN/transformers
 cd transformers
 pip install .
 cd ../
@@ -151,7 +153,7 @@ gsutil cp -r gs://bg_bucket/file_name_here.txt .
 
 For TPU training, we use the specific tpu script. It runs the xla_spawn.py script automatically and also uses --pad_to_max_length (important for fast training!).
 
-***Note:*** go the config/conf.sh and set a location of the training file. You can also change other settings.
+**Note:** go the config/conf.sh and set a location of the training file. You can also change other settings.
 
 A note on the batch size. The TPU automatically uses the specified train batch size on 8 devices of 8GB (v2-8) or 16GB (v3-8). So a batch size of 32 is an actual batch size of 256 already. You have to multiply this also with the gradient_accumulation_steps (e.g. 8) to get the actual batch size. In our case 32 * 8 * 8 = 2048.
 
