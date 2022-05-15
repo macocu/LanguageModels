@@ -37,7 +37,7 @@ For now, I will assume you have a text file in $FILE that we just read as is. No
 
 ## Tokenizing
 
-We are going to train a byte-level tokenizer with 50k vocab. There are different options, but this seems like a widely accepted option. We could go for normal WordPiece or a lower size as well. The nice thing about byte-level is that there are never unknown characters/words anymore. Since it is byte-level, the file with merges and vocab will look odd, but it should work.
+We are going to train a byte-level tokenizer with 32k vocab. There are different options, but this seems like a widely accepted option. We could go for normal WordPiece or a lower size as well. The nice thing about byte-level is that there are never unknown characters/words anymore. Since it is byte-level, the file with merges and vocab will look odd, but it should work.
 
 You can specify multiple input files with -i / --input_files and the output folder with -o / --out. If you supply --test, the tokenizer shows the pieces-output of the first 5 sentences of the first file.
 
@@ -71,14 +71,14 @@ This follows closely the steps in the [Roberta tutorial](https://cloud.google.co
 
 ```
 export PROJECT_ID=macocu-lm
-export EXP_NAME="macocu"
+export EXP_NAME="bg"
 export ZONE="europe-west4-a"
 gcloud config set project ${PROJECT_ID}
 gcloud config set compute/zone ${ZONE}
-gcloud compute instances create $EXP_NAME --machine-type=n1-standard-16 --image-family=torch-xla --image-project=ml-images --boot-disk-size=200GB --scopes=https://www.googleapis.com/auth/cloud-platform
+gcloud compute instances create $EXP_NAME --machine-type=n1-standard-8 --image-family=torch-xla --image-project=ml-images --boot-disk-size=200GB --scopes=https://www.googleapis.com/auth/cloud-platform
 ```
 
-It's important that you specified the correct zone above, because the TPU is only free for certain zones (see the email of TRC).
+It's important that you specified the correct zone above, because the TPU is only free for certain zones (see the email of TRC). Note that the VM still costs money even though the TPU is free.
 
 SSH to the newly created VM:
 
@@ -96,7 +96,7 @@ New SSH instance so do the exports again:
 
 ```
 export PROJECT_ID=macocu-lm
-export EXP_NAME="macocu"
+export EXP_NAME="bg"
 export ZONE="europe-west4-a"
 ```
 
@@ -106,7 +106,7 @@ Launch TPU, hope they are available. Make sure you specified the correct acceler
 gcloud compute tpus create $EXP_NAME --zone=${ZONE} --network=default --version=pytorch-1.11  --accelerator-type=v3-8
 ```
 
-If you get the error that there are no resources available, just keep trying until it works. That's the only solution I have currently.
+If you get the error that there are no resources available, just keep trying until it works. That's the only solution I have currently. When it was really bad, I wrapped the above command in a while true loop that tries every minute. You don't have to pay close attention, if it succeeds once the other commands will error because the resource already exists.
 
 For saving/storing data, the best option seems a [cloud storage bucket](https://cloud.google.com/compute/docs/disks#gcsbuckets), with [explanation here](https://cloud.google.com/storage/docs/quickstart-gsutil#create). Create a bucket like this:
 
@@ -140,7 +140,7 @@ Then install my fork of the Transformers repo and the requirements as described 
 ```
 git clone https://github.com/RikVN/transformers
 cd transformers
-pip install .
+pip install -e .
 cd ../
 pip install -r requirements.txt
 ```
@@ -153,11 +153,13 @@ gsutil cp -r gs://bg_bucket/file_name_here.txt .
 
 For TPU training, we use the specific tpu script. It runs the xla_spawn.py script automatically and also uses --pad_to_max_length (important for fast training!).
 
-**Note:** go the config/conf.sh and set a location of the training file. You can also change other settings.
+**Note:** go the config/conf.sh and set a location of the training file. You can also change other settings. Make sure these are correct!
 
 A note on the batch size. The TPU automatically uses the specified train batch size on 8 devices of 8GB (v2-8) or 16GB (v3-8). So a batch size of 32 is an actual batch size of 256 already. You have to multiply this also with the gradient_accumulation_steps (e.g. 8) to get the actual batch size. In our case 32 * 8 * 8 = 2048.
 
-I assume you have trained a vocabulary as described above and saved it in tok/. Start the training:
+I assume you have trained a vocabulary as described above and saved it in tok/. 
+
+Start the training:
 
 ```
 ./src/tpu_train_lm.sh config/conf.sh
@@ -173,6 +175,8 @@ Stopping instances so to not have unneccesary costs:
 gcloud compute instances stop $EXP_NAME
 gcloud compute tpus delete $EXP_NAME
 ```
+
+You can also just do this in the Google Cloud Console interface.
 
 ### Fine-tuning ###
 

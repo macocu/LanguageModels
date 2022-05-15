@@ -18,5 +18,5 @@
   "num_hidden_layers": 12,
   "pad_token_id": 1,
   "type_vocab_size": 1,
-  "vocab_size": 50000
+  "vocab_size": 32000
 }
