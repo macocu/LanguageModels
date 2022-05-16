@@ -1,9 +1,9 @@
 # Readme for LM training and evaluation
 
-If you're not working on a Google Cloud TPU, setup a Conda environment, needs Python 3.9 to work with Torch.
+If you're not working on a Google Cloud TPU, setup a Conda environment, needs Python 3.7 to work with Torch.
 
 ```
-conda create -n lm python=3.9
+conda create -n lm python=3.7
 conda activate lm
 ```
 
