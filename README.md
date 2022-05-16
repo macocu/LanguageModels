@@ -1,9 +1,9 @@
 # Readme for LM training and evaluation
 
-If you're not working on a Google Cloud TPU, setup a Conda environment, needs Python 3.7 to work with Torch.
+If you're not working on a Google Cloud TPU, setup a Conda environment, needs Python 3.9 to work with Torch.
 
 ```
-conda create -n lm python=3.7
+conda create -n lm python=3.9
 conda activate lm
 ```
 
@@ -75,7 +75,12 @@ export EXP_NAME="bg"
 export ZONE="europe-west4-a"
 gcloud config set project ${PROJECT_ID}
 gcloud config set compute/zone ${ZONE}
-gcloud compute instances create $EXP_NAME --machine-type=n1-standard-8 --image-family=torch-xla --image-project=ml-images --boot-disk-size=200GB --scopes=https://www.googleapis.com/auth/cloud-platform
+```
+
+Create a new VM. Make sure to get enough memory with all these large data sets and models. I needed to get more than 200GB, though that's also more expensive. If you need to get more disk memory after the VM is created, follow the steps [here](https://stackoverflow.com/questions/22381686/how-can-size-of-the-root-disk-in-google-compute-engine-be-increased). The 32 cores are worth it during tokenizing/chunking, otherwise that will be very slow if you have a large data set.
+
+```
+gcloud compute instances create $EXP_NAME --machine-type=n1-standard-32 --image-family=torch-xla --image-project=ml-images --boot-disk-size=600GB --scopes=https://www.googleapis.com/auth/cloud-platform
 ```
 
 It's important that you specified the correct zone above, because the TPU is only free for certain zones (see the email of TRC). Note that the VM still costs money even though the TPU is free.
@@ -128,7 +133,7 @@ Now onto the training, load pre-existing environment for TPU exps:
 conda activate torch-xla-1.11
 ```
 
-We have to set the TPU_IP explicitly apparently. You can find it under Compute Engine -> TPUs -> Internal IP.
+We have to set the TPU_IP explicitly (apparently). You can find it under Compute Engine -> TPUs -> Internal IP.
 
 ```
 export TPU_IP_ADDRESS="IP_ADDRESS_HERE"
@@ -157,7 +162,17 @@ For TPU training, we use the specific tpu script. It runs the xla_spawn.py scrip
 
 A note on the batch size. The TPU automatically uses the specified train batch size on 8 devices of 8GB (v2-8) or 16GB (v3-8). So a batch size of 32 is an actual batch size of 256 already. You have to multiply this also with the gradient_accumulation_steps (e.g. 8) to get the actual batch size. In our case 32 * 8 * 8 = 2048.
 
-I assume you have trained a vocabulary as described above and saved it in tok/. 
+I assume you have trained a vocabulary as described above and saved it in tok/. Don't forget to copy the roberta settings to the tok folder and call it config.json:
+
+```
+cp config/roberta.json tok/config.json
+```
+
+To speed up tokenization set this environment variable. If you get errors set it to false:
+
+```
+export TOKENIZERS_PARALLELISM=true
+```
 
 Start the training:
 
@@ -169,7 +184,7 @@ The conf.sh also specified where everything was saved (exp/ in this case). There
 
 ### Cleaning up
 
-Stopping instances so to not have unneccesary costs:
+Stopping instances to avoid unneccesary costs:
 
 ```
 gcloud compute instances stop $EXP_NAME
@@ -185,10 +200,14 @@ We do simple Bulgarian POS-finetuning with Simpletransformers. First get the dat
 ```
 git clone https://github.com/UniversalDependencies/UD_Bulgarian-BTB
 cd UD_Bulgarian-BTB
-for type in train dev test; do cut -f2,4 bg_btb-ud-${type}.conllu | grep -v "^#" > ${type}.conll ; done
+for type in train dev test; do cut -f2,4 bg_btb-ud-${type}.conllu | grep -v "^#" | sed -e "s/[[:space:]]\+/ /g" > ${type}.conll ; done
 ```
 
-A simple script with the library seems to work, will push a working version later.
+Then either specify your arguments in a json file (example added in config/fine.json) or just use the default ones. Run the model:
+
+```
+python src/simple_finetune.py --train_file UD_Bulgarian-BTB/train.conll -d UD_Bulgarian-BTB/dev.conll -a config/fine.json
+```
 
 ### Push to hub ###
 
