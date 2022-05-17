@@ -71,10 +71,11 @@ def main():
     train_args = get_train_args() if not args.arg_dict else load_json_dict(args.arg_dict)
 
     # It's necessary to get the labels first, to overwrite the default NER ones
-    init_labels = [x.split()[1].strip() for x in open(args.train_file, 'r', encoding="utf-8") if x.strip() and not x.strip().startswith("#")]
+    init_labels = [x.split()[-1].strip() for x in open(args.train_file, 'r', encoding="utf-8") if x.strip() and not x.strip().startswith("#")]
+    init_dev_labels = [x.split()[-1].strip() for x in open(args.dev_file, 'r', encoding="utf-8") if x.strip() and not x.strip().startswith("#")]
     # Always load them in the same order, without set()
     labels = []
-    for item in init_labels:
+    for item in init_labels + init_dev_labels:
         if item not in labels:
             labels.append(item)
     print ("Labels:\n", labels)

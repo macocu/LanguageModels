@@ -19,7 +19,7 @@ The run_mlm.py script requires an installation from the source:
 ```
 git clone https://github.com/RikVN/transformers
 cd transformers
-pip install .
+pip install -e .
 cd ../
 ```
 
@@ -77,10 +77,10 @@ gcloud config set project ${PROJECT_ID}
 gcloud config set compute/zone ${ZONE}
 ```
 
-Create a new VM. Make sure to get enough memory with all these large data sets and models. I needed to get more than 200GB, though that's also more expensive. If you need to get more disk memory after the VM is created, follow the steps [here](https://stackoverflow.com/questions/22381686/how-can-size-of-the-root-disk-in-google-compute-engine-be-increased). The 32 cores are worth it during tokenizing/chunking, otherwise that will be very slow if you have a large data set.
+Create a new VM. Make sure to get enough memory with all these large data sets and models. I needed to get more than 200GB, though that's also more expensive. If you need to get more disk memory after the VM is created, follow the steps [here](https://stackoverflow.com/questions/22381686/how-can-size-of-the-root-disk-in-google-compute-engine-be-increased). The 32 cores speed up tokenizing/chunking quite a bit (be sure to specify the number of processes in ``src/tpu_train.sh`` later), but you only need to do that once. In terms of training time it's also a bit faster to use more cores. The number of cores you use scale linearly in [price](https://cloud.google.com/compute/all-pricing).
 
 ```
-gcloud compute instances create $EXP_NAME --machine-type=n1-standard-32 --image-family=torch-xla --image-project=ml-images --boot-disk-size=600GB --scopes=https://www.googleapis.com/auth/cloud-platform
+gcloud compute instances create $EXP_NAME --machine-type=n1-standard-16 --image-family=torch-xla --image-project=ml-images --boot-disk-size=1000GB --scopes=https://www.googleapis.com/auth/cloud-platform
 ```
 
 It's important that you specified the correct zone above, because the TPU is only free for certain zones (see the email of TRC). Note that the VM still costs money even though the TPU is free.
@@ -168,10 +168,10 @@ I assume you have trained a vocabulary as described above and saved it in tok/. 
 cp config/roberta.json tok/config.json
 ```
 
-To speed up tokenization set this environment variable. If you get errors set it to false:
+Set this variable to false to avoid warnings:
 
 ```
-export TOKENIZERS_PARALLELISM=true
+export TOKENIZERS_PARALLELISM=false
 ```
 
 Start the training:
@@ -181,6 +181,8 @@ Start the training:
 ```
 
 The conf.sh also specified where everything was saved (exp/ in this case). There we find the trained models we can send to the bucket and download to our local CPU.
+
+**Note**: this script does whole-word masking, which is (for now) only implemented for BERT and RoBERTa.
 
 ### Cleaning up
 
@@ -200,13 +202,14 @@ We do simple Bulgarian POS-finetuning with Simpletransformers. First get the dat
 ```
 git clone https://github.com/UniversalDependencies/UD_Bulgarian-BTB
 cd UD_Bulgarian-BTB
-for type in train dev test; do cut -f2,4 bg_btb-ud-${type}.conllu | grep -v "^#" | sed -e "s/[[:space:]]\+/ /g" > ${type}.conll ; done
+for type in train dev test; do cut -f2,4 bg_btb-ud-${type}.conllu | grep -v "^#" | sed -e "s/[[:space:]]\+/ /g" > ${type}.upos.conll ; done
+for type in train dev test; do cut -f2,5 bg_btb-ud-${type}.conllu | grep -v "^#" | sed -e "s/[[:space:]]\+/ /g" > ${type}.xpos.conll ; done
 ```
 
 Then either specify your arguments in a json file (example added in config/fine.json) or just use the default ones. Run the model:
 
 ```
-python src/simple_finetune.py --train_file UD_Bulgarian-BTB/train.conll -d UD_Bulgarian-BTB/dev.conll -a config/fine.json
+python src/simple_finetune.py --train_file UD_Bulgarian-BTB/train.upos.conll -d UD_Bulgarian-BTB/dev.upos.conll -a config/fine.json
 ```
 
 ### Push to hub ###
