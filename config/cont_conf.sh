@@ -16,7 +16,7 @@ gradient_accumulation_steps="8"
 save_steps="2500"
 max_steps="--max_steps 200000"
 logging_steps="500"
-piece_masking="--piece-masking" # add as --piece_masking, otherwise do whole word masking
+piece_masking="--piece_masking" # add as --piece_masking, otherwise do whole word masking
 warmup_ratio="--warmup_ratio 0.05"
 learning_rate="1e-4"
 
