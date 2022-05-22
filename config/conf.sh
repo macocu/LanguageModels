@@ -19,6 +19,7 @@ max_steps="--max_steps 200000"
 warmup_ratio="--warmup_ratio 0.05"
 learning_rate="5e-4"
 logging_steps="500"
+model_name_or_path="" # add as --model_name_or_path checkpoint_dir/ when restarting training
 
 # You can add more arguments, but make sure train_lm.sh knows about them
 # E.g. you have to add the argument to the actual training call there
