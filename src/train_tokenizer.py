@@ -14,9 +14,9 @@ def create_arg_parser():
     parser.add_argument("-i", "--input_files", nargs="+", required=True, type=str,
                         help="Files to use when training the tokenizer")
     parser.add_argument("-o", "--out", required=True, type=str,
-                        help="Folder + name where we save the tokenizer .e.g tok/roberta")
-    parser.add_argument("-v", "--vocab_size", default=50000, type=int,
-                        help="Size of the vocab - default 50k")
+                        help="Folder where we save the tokenizer")
+    parser.add_argument("-v", "--vocab_size", default=32000, type=int,
+                        help="Size of the vocab - default 32k")
     parser.add_argument("-m", "--min_freq", default=2, type=int,
                         help="Minimal frequency a pair should have in order to be merged")
     parser.add_argument("-t", "--test", action="store_true",
@@ -55,6 +55,8 @@ def main():
 
     # Set the special tokens: currently setup for RoBERTa models
     special_tokens = ["<s>", "<pad>", "</s>", "<unk>", "<mask>"]
+    print (f"Using special tokens for RoBERTa: {special_tokens}")
+    print ("These are currently hardcoded in the train_tokenizer script\n")
 
     # Train the tokenizer
     tokenizer.train(files=args.input_files, vocab_size=args.vocab_size, min_frequency=args.min_freq,
