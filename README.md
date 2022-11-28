@@ -223,7 +223,7 @@ Set this variable to false to avoid warnings:
 export TOKENIZERS_PARALLELISM=false
 ```
 
-Now, check if ``src/train_lm.sh`` specified the correct of number processes in your setup (default is 16). You can set it to the number of CPU cores, or a bit less. For large files this can speed up tokenization and chunking quite a bit.
+Now, check if ``src/train_lm.sh`` has the correct number of processes specified in your setup (``num_processes``, default is 16). You can set it to the number of CPU cores, or a bit less. For large files this can speed up tokenization and chunking quite a bit.
 
 Now we can start the actual training. If you run on TPU, please assign "tpu" or "TPU" as the second argument. If not, please add any other string.
 
