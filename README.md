@@ -223,7 +223,7 @@ Set this variable to false to avoid warnings:
 export TOKENIZERS_PARALLELISM=false
 ```
 
-Now, check if ``src/train_lm.sh`` specified the correct of number processes in your setup (default is 16). You can set it to the number of CPU cores, or a bit less. For large files this can speed up tokenization and chunking quite a bit.
+Now, check if ``src/train_lm.sh`` has the correct number of processes specified in your setup (``num_processes``, default is 16). You can set it to the number of CPU cores, or a bit less. For large files this can speed up tokenization and chunking quite a bit.
 
 Now we can start the actual training. If you run on TPU, please assign "tpu" or "TPU" as the second argument. If not, please add any other string.
 
@@ -255,13 +255,17 @@ You might want to restart the training due to a variety of reasons (see below fo
 model_name_or_path="--model_name_or_path /path/to/checkpoint-30000/"
 ```
 
+With that you ensure that the weights of this model are loaded.
+
 **Also**, you should **not** overwrite the output folder anymore, so change it to empty (and do not remove, because the script expects the variable to exist):
 
 ```
 overwrite_output_dir=""
 ```
 
-It will read the exact training state from the saved optimizer state. It is possible to specify a different number of total steps though, which can be useful if you want to train longer than you initially thought.
+In the output directory a folder named ``checkpoint-30000`` or similar (the number denotes the number of steps performed) should be present as from this model the exact training state from the saved optimizer state will be loaded. Best practice might be for ``model_name_or_path`` to contain the path to the checkpoint in the output directory with the highest number of steps. With that one ensures that the weights and the optimizer are loaded from the same checkpoint.
+
+It is possible to specify a different number of total steps at this point, which can be useful if you want to train longer than you initially thought. One can even change the data the model is to be trained on, however, the optimizer will ensure that a specific number of steps is skipped before training continues.
 
 ### TPU Errors ###
 
