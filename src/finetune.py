@@ -6,6 +6,9 @@ import sys
 import os
 import argparse
 import json
+import random as python_random
+import numpy as np
+import torch
 from simpletransformers.ner import NERModel
 
 
@@ -23,10 +26,19 @@ def create_arg_parser():
                         help="Simpletransformers LM type identifier")
     parser.add_argument("-li", "--lm_ident", type=str, default="xlm-roberta-large",
                         help="Language model identifier (specific LM identifier (default XLM-R) OR location of the folder with the trained model")
+    parser.add_argument("-s", "--seed", type=int, default=2222,
+                        help="Random seed that we use")
     # Arguments for training a model
     parser.add_argument("-a", "--arg_dict", type=str,
                         help="Optional json dict with extra arguments (recommended). Otherwise use our default settings")
     args = parser.parse_args()
+    # Make reproducible as much as possible by setting the random seed everywhere
+    # Not sure if it matters here, but do it either way
+    np.random.seed(args.seed)
+    python_random.seed(args.seed)
+    torch.manual_seed(args.seed)
+    torch.cuda.manual_seed(args.seed)
+    torch.cuda.manual_seed_all(args.seed)
     return args
 
 
@@ -96,6 +108,9 @@ def main():
     # Let training arguments know about the labels
     train_args["label_list"] = labels
     train_args["output_dir"] = args.output_dir
+
+    # Let arguments know about the seed and use the seed in all places
+    train_args["manual_seed"] = args.seed
 
     # Create the model - hardcoded to use GPU
     model = NERModel(args.lm_type, args.lm_ident, labels=labels, use_cuda=True, args=train_args)
