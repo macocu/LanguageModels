@@ -21,7 +21,7 @@ learning_rate="5e-4"
 logging_steps="500"
 model_name_or_path="" # add as --model_name_or_path checkpoint_dir/ when restarting training
 piece_masking="" #add as --piece_masking if you want to piece masking instead of whole-word masking
-tokenizer_name="--config_name $tokenizer_fol"
+tokenizer_name="--tokenizer_name $tokenizer_fol"
 
 # You can add more arguments, but make sure train_lm.sh knows about them
 # E.g. you have to add the argument to the actual training call there
