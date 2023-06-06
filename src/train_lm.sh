@@ -15,7 +15,7 @@ config_sh=$1 # Config sh file with experimental settings
 source $config_sh # Load all variables to here
 
 # Set variables - change number of processes depending on the CPU cores available
-num_processes=16
+num_processes=8
 SEED=2810
 
 # Check if we're running on a TPU

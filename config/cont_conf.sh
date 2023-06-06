@@ -14,11 +14,11 @@ overwrite_output_dir="--overwrite_output_dir"
 # TPU training automatically divides over the 8 cores
 # So actual batch size is 8 * batch_train * gradient_accumulation_steps
 gradient_accumulation_steps="16"
-save_steps="2500"
-max_steps="--max_steps 100000"
-logging_steps="500"
+save_steps="2000"
+max_steps="--max_steps 200000"
+logging_steps="250"
 piece_masking="--piece_masking" # add as --piece_masking, otherwise does whole word masking
-warmup_ratio="--warmup_ratio 0.05"
+warmup_ratio="--warmup_ratio 0.025"
 learning_rate="1e-4"
 # The train script expects these variables to exist, but you should leave it empty
 # when continuing training from an existing LM
