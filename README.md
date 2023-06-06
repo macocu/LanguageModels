@@ -305,6 +305,8 @@ cp config/roberta.json tok/config.json
 
 ## Fine-tuning on GPU ##
 
+**Note**: for fine-tuning on COPA data please see our [separate repository](https://github.com/RikVN/COPA).
+
 We also want to fine-tune our trained models on downstream tasks. This I only ran on GPUs.
 
 We do simple token classification with Simpletransformers, for POS tagging and NER.
